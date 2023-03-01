@@ -2,7 +2,7 @@
 
 #include "PM2_Drivers.h"
 
-# define M_PI 3.14159265358979323846 // number pi, an example in case you need it
+# define M_PI 3.1415926535897932 // number pi, an example in case you need it
 
 
 bool do_execute_main_task = false; // this variable will be toggled via the user button (blue button) and decides whether to execute the main task or not
@@ -28,7 +28,7 @@ int main()
     user_button.fall(&user_button_pressed_fcn);
 
     // while loop gets executed every main_task_period_ms milliseconds (simple aproach to repeatedly execute main)
-    const int main_task_period_ms = 50; // define main task period time in ms e.g. 50 ms -> main task runs 20 times per second
+    const int main_task_period_ms = 1000; // define main task period time in ms e.g. 50 ms -> main task runs 20 times per second
     Timer main_task_timer;              // create Timer object which we use to run the main task every main_task_period_ms
 
 
@@ -44,9 +44,7 @@ int main()
     mechanical_button.mode(PullUp);    // set pullup mode: sets pullup between pin and 3.3 V, so that there is a defined potential
 
 
-    // Sharp GP2Y0A41SK0F, 4-40 cm IR Sensor
-    float ir_distance_mV = 0.0f; // define variable to store measurement
-    AnalogIn ir_analog_in(PC_2); // create AnalogIn object to read in infrared distance sensor, 0...3.3V are mapped to 0...1
+   
 
 
     // Futaba Servo S3001 20mm 3kg Analog
@@ -87,6 +85,11 @@ int main()
     positionController_M3.setMaxVelocityRPS(max_speed_rps); // adjust max velocity for internal speed controller
 
 
+ // Sharp GP2Y0A41SK0F, 4-40 cm IR Sensor
+    float ir_distance_mV = 0.0f; // define variable to store measurement
+    AnalogIn ir_analog_in(PC_2); // create AnalogIn object to read in infrared distance sensor, 0...3.3V are mapped to 0...1
+    float voltage_in_mv;
+
     main_task_timer.start();
     
     // this loop will run forever
@@ -94,7 +97,17 @@ int main()
 
         main_task_timer.reset();
 
+
+        
+
+
+
+
+
         if (do_execute_main_task) {
+            ir_distance_mV=ir_analog_in.read();
+        voltage_in_mv = ir_distance_mV*3300;
+        printf("\n%f, ", voltage_in_mv );
 
             // read analog input
             ir_distance_mV = 1.0e3f * ir_analog_in.read() * 3.3f;
@@ -194,13 +207,13 @@ int main()
         user_led = !user_led;
 
         // do only output via serial what's really necessary, this makes your code slow
-        printf("IR sensor (mV): %3.3f, Encoder M1: %3d, Speed M2 (rps) %3.3f, Position M3 (rot): %3.3f, Servo S1 angle (normalized): %3.3f, Servo S2 angle (normalized): %3.3f\r\n",
+        /*printf("IR sensor (mV): %3.3f, Encoder M1: %3d, Speed M2 (rps) %3.3f, Position M3 (rot): %3.3f, Servo S1 angle (normalized): %3.3f, Servo S2 angle (normalized): %3.3f\r\n",
                ir_distance_mV,
                encoder_M1.read(),
                speedController_M2.getSpeedRPS(),
                positionController_M3.getRotation(),
                servo_S1_angle,
-               servo_S2_angle);
+               servo_S2_angle);*/
 
         // read timer and make the main thread sleep for the remaining time span (non blocking)
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
